@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS `image` (
 
 
 
-
+--管理员账号密码都是lst123
 INSERT INTO `user` (`username`, `password`, `nickname`, `role_type`) 
-VALUES ('lst123', '$2a$10$rTe5CaQwEEHf/hvLSUu3OOHVlKH9xzXHqMcPqiD4.XTh9RrHxKFn2', '管理员', 1);
+VALUES ('lst123', '$2a$10$Q27KFPPJ0IOTHE0iyTDOBOk7WBPRorI.uh6wHhQMIcMDa.FP4kRIe', '管理员', 1);
 
 
