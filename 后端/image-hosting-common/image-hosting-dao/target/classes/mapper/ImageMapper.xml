@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imagehosting.dao.ImageDao">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.imagehosting.model.entity.Image">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="original_name" property="originalName"/>
+        <result column="path" property="path"/>
+        <result column="url" property="url"/>
+        <result column="md5" property="md5"/>
+        <result column="size" property="size"/>
+        <result column="width" property="width"/>
+        <result column="height" property="height"/>
+        <result column="mime_type" property="mimeType"/>
+        <result column="access_count" property="accessCount"/>
+        <result column="deleted" property="deleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <resultMap id="StatResultMap" type="com.imagehosting.model.dto.ImageStatDTO">
+        <result column="date" property="date"/>
+        <result column="count" property="count"/>
+    </resultMap>
+
+    <!-- 插入图片 -->
+    <insert id="insert" parameterType="com.imagehosting.model.entity.Image" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO image (
+            user_id, name, original_name, path, url, md5, size,
+            width, height, mime_type, access_count, deleted, create_time, update_time
+        ) VALUES (
+            #{userId}, #{name}, #{originalName}, #{path}, #{url}, #{md5}, #{size},
+            #{width}, #{height}, #{mimeType}, #{accessCount}, #{deleted}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 更新图片 -->
+    <update id="update" parameterType="com.imagehosting.model.entity.Image">
+        UPDATE image
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="path != null">path = #{path},</if>
+            <if test="url != null">url = #{url},</if>
+            <if test="accessCount != null">access_count = #{accessCount},</if>
+            <if test="deleted != null">deleted = #{deleted},</if>
+            update_time = now()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除图片（逻辑删除） -->
+    <update id="delete">
+        UPDATE image SET deleted = 1, update_time = now() WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询图片 -->
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM image WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID和MD5查询图片 -->
+    <select id="findByUserIdAndMd5" resultMap="BaseResultMap">
+        SELECT * FROM image 
+        WHERE user_id = #{userId} AND md5 = #{md5}
+        LIMIT 1
+    </select>
+
+    <!-- 根据用户ID查询图片列表 -->
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM image
+        WHERE user_id = #{userId} AND deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (name LIKE CONCAT('%', #{keyword}, '%') OR original_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <choose>
+            <when test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+                ORDER BY ${sortField} ${sortOrder}
+            </when>
+            <otherwise>
+                ORDER BY create_time DESC
+            </otherwise>
+        </choose>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 根据用户ID统计图片数量 -->
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*) FROM image
+        WHERE user_id = #{userId} AND deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (name LIKE CONCAT('%', #{keyword}, '%') OR original_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 增加访问次数 -->
+    <update id="incrementAccessCount">
+        UPDATE image SET access_count = access_count + 1 WHERE id = #{id}
+    </update>
+    
+    <!-- 查询所有图片列表（管理员用） -->
+    <select id="findAllImages" resultMap="BaseResultMap">
+        SELECT * FROM image
+        <where>
+            deleted = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <!-- 统计所有图片数量（管理员用） -->
+    <select id="countAllImages" resultType="long">
+        SELECT COUNT(*) FROM image
+        <where>
+            deleted = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 统计总存储空间大小 -->
+    <select id="sumStorageSize" resultType="long">
+        SELECT COALESCE(SUM(size), 0) FROM image WHERE deleted = 0
+    </select>
+    
+    <!-- 统计今日上传图片数量 -->
+    <select id="countTodayUploaded" resultType="long">
+        SELECT COUNT(*) FROM image
+        WHERE deleted = 0 AND DATE(create_time) = CURRENT_DATE()
+    </select>
+    
+    <!-- 统计过去7天的每日上传数量 -->
+    <select id="countWeekStats" resultMap="StatResultMap">
+        SELECT 
+            DATE_FORMAT(date_list.date, '%Y-%m-%d') as date,
+            COUNT(i.id) as count
+        FROM (
+            SELECT CURDATE() - INTERVAL (a.a + (10 * b.a) + (100 * c.a)) DAY as date
+            FROM (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as a
+            CROSS JOIN (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as b
+            CROSS JOIN (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as c
+            WHERE (a.a + (10 * b.a) + (100 * c.a)) BETWEEN 0 AND 6
+        ) as date_list
+        LEFT JOIN image i ON DATE(i.create_time) = date_list.date AND i.deleted = 0
+        GROUP BY date_list.date
+        ORDER BY date_list.date
+    </select>
+    
+    <!-- 统计过去30天的每日上传数量 -->
+    <select id="countMonthStats" resultMap="StatResultMap">
+        SELECT 
+            DATE_FORMAT(date_list.date, '%Y-%m-%d') as date,
+            COUNT(i.id) as count
+        FROM (
+            SELECT CURDATE() - INTERVAL (a.a + (10 * b.a) + (100 * c.a)) DAY as date
+            FROM (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as a
+            CROSS JOIN (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as b
+            CROSS JOIN (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) as c
+            WHERE (a.a + (10 * b.a) + (100 * c.a)) BETWEEN 0 AND 29
+        ) as date_list
+        LEFT JOIN image i ON DATE(i.create_time) = date_list.date AND i.deleted = 0
+        GROUP BY date_list.date
+        ORDER BY date_list.date
+    </select>
+</mapper> 
