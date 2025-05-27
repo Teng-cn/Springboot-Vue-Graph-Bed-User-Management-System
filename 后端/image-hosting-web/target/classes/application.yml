@@ -1,0 +1,64 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/image_hosting?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+logging:
+  level:
+    com.imagehosting: DEBUG
+    org.springframework.security: DEBUG
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.imagehosting.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+storage:
+  local:
+    path: D:/image-hosting/upload
+    url-prefix: http://localhost:8080/api/image/file
+
+jwt:
+  secret: image-hosting-secret-key
+  expiration: 86400000 # 1 day in milliseconds
+  header: Authorization
+  tokenPrefix: Bearer 
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packages-to-scan: com.imagehosting.web.controller
+  show-actuator: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  cache:
+    disabled: false
+
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: xxxxxxxxxx
+    accessKeySecret: xxxxxxx
+    bucketName: 名称
+    domain: https://名称.oss-cn-beijing.aliyuncs.com 

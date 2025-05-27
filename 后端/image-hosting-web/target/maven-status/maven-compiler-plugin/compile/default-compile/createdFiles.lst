@@ -1,0 +1,9 @@
+com\imagehosting\web\controller\ImageProcessController.class
+com\imagehosting\ImageHostingApplication.class
+com\imagehosting\web\config\SecurityConfig.class
+com\imagehosting\web\controller\AdminController.class
+com\imagehosting\web\security\JwtAuthenticationFilter.class
+com\imagehosting\web\config\OpenApiConfig.class
+com\imagehosting\web\controller\UserController.class
+com\imagehosting\web\security\JwtAuthorizationFilter.class
+com\imagehosting\web\controller\ImageController.class
