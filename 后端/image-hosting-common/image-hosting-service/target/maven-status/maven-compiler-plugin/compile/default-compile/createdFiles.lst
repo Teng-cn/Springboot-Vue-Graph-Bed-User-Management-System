@@ -1,9 +1,0 @@
-com\imagehosting\service\ImageService.class
-com\imagehosting\service\AdminService.class
-com\imagehosting\service\UserService.class
-com\imagehosting\service\impl\LocalStorageServiceImpl.class
-com\imagehosting\service\ImageProcessService.class
-com\imagehosting\service\impl\AdminServiceImpl.class
-com\imagehosting\service\StorageService.class
-com\imagehosting\service\impl\ImageServiceImpl.class
-com\imagehosting\service\impl\ImageProcessServiceImpl.class
